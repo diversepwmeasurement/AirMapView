@@ -1,31 +1,35 @@
-name: Deploy snapshot
-
-on:
-  # Trigger ONLY on push to master branch
-  push:
-    branches:
-      - master
 jobs:
   build-test:
     uses: airbnb/AirMapView/.github/workflows/build_test.yml@master
   deploy-snapshot:
     needs: build-test
-    runs-on: ubuntu-latest
+    runs-on: self-hosted
     steps:
-      - name: Checkout AirMapView
-        uses: actions/checkout@v2
-      - uses: actions/setup-java@v2
-        with:
-          distribution: liberica
-          java-version: '8'
-      - name: Create sytem gradle.properties
-        env:
-          GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
-        shell: bash
-        run: |
-          mkdir -p ~/.gradle/
-          echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
-          echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
-      - name: Deploy new snapshot of AirMapView
-        shell: bash
-        run: ./gradlew uploadArchives
+    - continue-on-error: true
+      name: Checkout AirMapView
+      uses: actions/checkout@v2
+    - continue-on-error: true
+      uses: actions/setup-java@v2
+      with:
+        distribution: liberica
+        java-version: '8'
+    - continue-on-error: true
+      env:
+        GRADLE_PROPERTIES: ${{ secrets.GRADLE_PROPERTIES }}
+      name: Create sytem gradle.properties
+      run: 'mkdir -p ~/.gradle/
+
+        echo "GRADLE_USER_HOME=${HOME}/.gradle" >> $GITHUB_ENV
+
+        echo "${GRADLE_PROPERTIES}" > ~/.gradle/gradle.properties
+
+        '
+      shell: bash
+    - continue-on-error: true
+      name: Deploy new snapshot of AirMapView
+      run: ./gradlew uploadArchives
+      shell: bash
+name: Deploy snapshot
+on:
+  repository_dispatch:
+    types: trigger-ga___deploy_snapshot.yml
